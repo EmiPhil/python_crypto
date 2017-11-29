@@ -18,7 +18,7 @@ def resize_terminal(rows, cols):
   # windows
   os.system('mode con: cols={cols} lines={rows}'.format(rows=rows, cols=cols))
 
-url = 'https://api.coinmarketcap.com/v1/ticker/?limit=0'
+url = 'https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=0'
 
 def fetch_data(url):
   res = requests.get(url)
@@ -85,9 +85,10 @@ def make_table(data, portfolio):
       # Header
       click.style('Rank', fg='white'),
       click.style('Coin', fg='white'),
-      click.style('USD Price', fg='white'),
+      click.style('Price', fg='white'),
       click.style('Coins Owned', fg='white'),
-      click.style('Net Worth', fg='white'),
+      click.style('Net Worth CAD', fg='white'),      
+      click.style('Net Worth USD', fg='white'),
       click.style('24 Hour Volume', fg='white'),
       click.style('Market Cap', fg='white'),
       click.style('1 Hour', fg='white'),
@@ -104,6 +105,7 @@ def make_table(data, portfolio):
       click.style(id, fg='cyan'),
       click.style('$' + add_commas(row['price_usd']), fg='green'),
       click.style(add_commas(portfolio[id]), fg='green'),
+      click.style('$' + add_commas(str(int(round(float(portfolio[id]) * float(row['price_cad']),)))), fg='green'),
       click.style('$' + add_commas(str(int(round(float(portfolio[id]) * float(row['price_usd']),)))), fg='green'),
       click.style('$' + add_commas(format(float(row['24h_volume_usd']), '.2f')), fg='green'),
       click.style('$' + add_commas(format(float(row['market_cap_usd']), '.2f')), fg='green'),
@@ -122,15 +124,18 @@ def make_table(data, portfolio):
 
 def make_graph(data, portfolio):
   bar_data = []
-  portfolio_total = 0
+  portfolio_total_cad = 0
+  portfolio_total_usd = 0
   longest = 0
   for row in data:
     id = row['id']
     if (len(id) > longest):
       longest = len(id)
+    cad_value = float(portfolio[id]) * float(row['price_cad'])
     value = float(portfolio[id]) * float(row['price_usd'])
     bar_data.append((id, value))
-    portfolio_total += value
+    portfolio_total_cad += cad_value
+    portfolio_total_usd += value
   
   def get_rank(elem):
     id = elem[0]
@@ -153,7 +158,7 @@ def make_graph(data, portfolio):
     for _ in range(0, spaces):
       label += ' '
     
-    percent = '\t' + str(round((value / portfolio_total) * 100, 2)) + '%'
+    percent = '\t' + str(round((value / portfolio_total_usd) * 100, 2)) + '%'
     label += percent
 
     if (i % 2 == 0):
@@ -167,18 +172,26 @@ def make_graph(data, portfolio):
   graph_data = vcolor(graph_data, pattern)
   graph = Pyasciigraph(graphsymbol=None)
   bar_graph = graph.graph(label=None, data=graph_data)
-  return [bar_graph, portfolio_total]
+  return [bar_graph, portfolio_total_usd, portfolio_total_cad]
 
-def pretty_total(total):
-  label = click.style(
+def pretty_total(total_usd, total_cad):
+  cad = click.style(
+    'Portfolio CAD Total: ',
+    fg='magenta'
+  )
+  dollars_cad = click.style(
+    '$' + str(round(total_cad, 2)),
+    fg='yellow', bg='black', bold=True, underline=True
+  )
+  usd = click.style(
     'Portfolio USD Total: ',
     fg='magenta'
   )
-  dollars = click.style(
-    '$' + str(round(total, 2)),
+  dollars_usd = click.style(
+    '$' + str(round(total_usd, 2)),
     fg='yellow', bg='black', bold=True, underline=True
   )
-  return label + dollars
+  return cad + dollars_cad + '\t' + usd + dollars_usd
 
 def main(cycles):
   cycles += 1
@@ -187,11 +200,11 @@ def main(cycles):
   data = portfolio_rows(fetch_data(url), portfolio)
   table = make_table(data, portfolio)
   graph_data = make_graph(data, portfolio)
-  portfolio_total = pretty_total(graph_data[1])
+  portfolio_total = pretty_total(graph_data[1], graph_data[2])
 
   click.clear()
   print click.style(
-    'Cycles: ' + str(cycles) + ' | Process is ' + click.style('live.', blink=True, fg='green') + '\n',
+    'Cycles: ' + str(cycles) + ' | Process is ' + click.style('live.', blink=True, fg='green') + ' All prices in USD unless otherwise specified.\n',
     fg='white'
   )
   for line in graph_data[0]:
