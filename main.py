@@ -18,7 +18,7 @@ def resize_terminal(rows, cols):
   # windows
   os.system('mode con: cols={cols} lines={rows}'.format(rows=rows, cols=cols))
 
-url = 'https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=0'
+url = 'https://api.coinmarketcap.com/v1/ticker/?limit=0'
 
 def fetch_data(url):
   res = requests.get(url)
@@ -85,7 +85,7 @@ def make_table(data, portfolio):
       # Header
       click.style('Rank', fg='white'),
       click.style('Coin', fg='white'),
-      click.style('CAD Price', fg='white'),
+      click.style('USD Price', fg='white'),
       click.style('Coins Owned', fg='white'),
       click.style('Net Worth', fg='white'),
       click.style('24 Hour Volume', fg='white'),
@@ -102,11 +102,11 @@ def make_table(data, portfolio):
     table_row = [
       click.style(row['rank'], fg='white'),
       click.style(id, fg='cyan'),
-      click.style('$' + add_commas(row['price_cad']), fg='green'),
+      click.style('$' + add_commas(row['price_usd']), fg='green'),
       click.style(add_commas(portfolio[id]), fg='green'),
-      click.style('$' + add_commas(str(int(round(float(portfolio[id]) * float(row['price_cad']),)))), fg='green'),
-      click.style('$' + add_commas(format(float(row['24h_volume_cad']), '.2f')), fg='green'),
-      click.style('$' + add_commas(format(float(row['market_cap_cad']), '.2f')), fg='green'),
+      click.style('$' + add_commas(str(int(round(float(portfolio[id]) * float(row['price_usd']),)))), fg='green'),
+      click.style('$' + add_commas(format(float(row['24h_volume_usd']), '.2f')), fg='green'),
+      click.style('$' + add_commas(format(float(row['market_cap_usd']), '.2f')), fg='green'),
       style_percent(row['percent_change_1h']),
       style_percent(row['percent_change_24h']),
       style_percent(row['percent_change_7d']),
@@ -128,7 +128,7 @@ def make_graph(data, portfolio):
     id = row['id']
     if (len(id) > longest):
       longest = len(id)
-    value = float(portfolio[id]) * float(row['price_cad'])
+    value = float(portfolio[id]) * float(row['price_usd'])
     bar_data.append((id, value))
     portfolio_total += value
   
@@ -171,7 +171,7 @@ def make_graph(data, portfolio):
 
 def pretty_total(total):
   label = click.style(
-    'Portfolio CAD Total: ',
+    'Portfolio USD Total: ',
     fg='magenta'
   )
   dollars = click.style(
