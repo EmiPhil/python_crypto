@@ -121,7 +121,7 @@ def make_table(data, portfolio):
   return table_instance.table
 
 def make_graph(data, portfolio):
-  bar_data = {}
+  bar_data = []
   portfolio_total = 0
   longest = 0
   for row in data:
@@ -129,14 +129,24 @@ def make_graph(data, portfolio):
     if (len(id) > longest):
       longest = len(id)
     value = float(portfolio[id]) * float(row['price_cad'])
-    bar_data[id] = value
+    bar_data.append((id, value))
     portfolio_total += value
+  
+  def get_rank(elem):
+    id = elem[0]
+    for row in data:
+      if (row['id'] == id):
+        rank = row['rank']
+    return int(rank)
+  
+  bar_data.sort(key=get_rank)
 
   graph_data = []
   i = 0
-  for id in bar_data:
+  for elem in bar_data:
     i += 1
-    value = bar_data[id]
+    id = elem[0]
+    value = elem[1]
     label = '$  -  ' + id
     
     spaces = longest - len(id)
@@ -172,7 +182,7 @@ def pretty_total(total):
 
 def main(cycles):
   cycles += 1
-  repeater.enter(5, 1, main, ([cycles]))
+  repeater.enter(6, 1, main, ([cycles]))
   portfolio = read_portfolio()
   data = portfolio_rows(fetch_data(url), portfolio)
   table = make_table(data, portfolio)
