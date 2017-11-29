@@ -1,6 +1,6 @@
 import sched, time, click, requests, json, re, datetime, sys, os
 
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 
 from ascii_graph import Pyasciigraph
 from ascii_graph.colors import *
@@ -114,7 +114,7 @@ def make_table(data, portfolio):
     ]
     table_data.append(table_row)
   
-  table_instance = SingleTable(table_data, 'Crypto Stats')
+  table_instance = AsciiTable(table_data, 'Crypto Stats')
   cols = len(table_instance.table.split('\n')[0])
   resize_terminal(total_rows(data), cols)
 
